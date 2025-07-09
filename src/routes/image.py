@@ -1,7 +1,6 @@
 import sys
-sys.path.insert(0, r'D:/')  # biar bisa akses image_controller_api
-
-from image_controller_api.utils.image_utils import process_image_file
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 
 
@@ -18,10 +17,10 @@ from datetime import datetime
 
 
 # Modular imports
-from image_processing_api.src.font_controllers.font_color import COLOR_OPTIONS
-from image_processing_api.src.font_controllers.font_style import get_font
-from image_processing_api.src.font_controllers.font_position import calculate_text_position
-from image_processing_api.src.path_controllers.path import get_save_path
+from src.font_controllers.font_color import COLOR_OPTIONS
+from src.font_controllers.font_style import get_font
+from src.font_controllers.font_position import calculate_text_position
+from src.path_controllers.path import get_save_path
 
 
 image_bp = Blueprint('image', __name__)
