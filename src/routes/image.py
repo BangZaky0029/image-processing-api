@@ -1,3 +1,10 @@
+import sys
+sys.path.insert(0, r'D:/')  # biar bisa akses image_controller_api
+
+from image_controller_api.utils.image_utils import process_image_file
+
+
+
 import os
 import io
 import re
@@ -8,14 +15,20 @@ from flask import Blueprint, request, jsonify, send_file
 from flask_cors import CORS
 from datetime import datetime
 
+
+
 # Modular imports
-from src.font_controllers.font_color import COLOR_OPTIONS
-from src.font_controllers.font_style import get_font
-from src.font_controllers.font_position import calculate_text_position
-from src.path_controllers.path import get_save_path
+from image_processing_api.src.font_controllers.font_color import COLOR_OPTIONS
+from image_processing_api.src.font_controllers.font_style import get_font
+from image_processing_api.src.font_controllers.font_position import calculate_text_position
+from image_processing_api.src.path_controllers.path import get_save_path
+
 
 image_bp = Blueprint('image', __name__)
 CORS(image_bp)
+
+# D:\image_controller_api\utils\image_utils.py
+
 
 # Load YOLOv5 model (once)
 model = None
@@ -37,41 +50,37 @@ ext = ".jpg"
 @image_bp.route('/process_image', methods=['POST'])
 def process_image():
     try:
-        # Validasi file
-        if 'image' not in request.files:
-            return jsonify({'error': 'Tidak ada file gambar yang dikirim'}), 400
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({'error': 'Tidak ada file yang dipilih'}), 400
+        data = request.get_json()
 
-        # Ambil parameter
-        header_text = request.form.get('header_text', '0625-00940 (Marsoto, 2 SISI ZIPPER), 1 PCS')
-        font_color_name = request.form.get('font_color', 'black')
-        nama = request.form.get('nama', 'Zaky Aulia Qolbi')
+        image_path = data.get('image_path')
+        nama = data.get('nama', 'Zaky Aulia Qolbi')
+        header_text = data.get('header_text', '')
+        font_color_name = data.get('font_color', 'black')
+
+        if not image_path or not os.path.exists(image_path):
+            return jsonify({'error': 'Path gambar tidak ditemukan'}), 400
 
         font_color = COLOR_OPTIONS.get(font_color_name, (0, 0, 0))
 
-        # Baca gambar langsung dari stream pakai PIL (biar ICC dan DPI tetap kejaga)
-        file_stream = file.stream
-        image_pil = Image.open(file_stream)
+        # Buka image dari path
+        image_pil = Image.open(image_path)
 
-        # Backup ICC Profile & DPI jika ada
+        # Backup ICC Profile & DPI kalau ada
         icc_profile = image_pil.info.get('icc_profile')
-        dpi = image_pil.info.get('dpi', (300, 300))  # fallback default kalau gak ada
+        dpi = image_pil.info.get('dpi', (300, 300))
 
         draw = ImageDraw.Draw(image_pil)
 
-        # Tambahkan header
+        # ✍️ Tambah header
         try:
             header_font = get_font(size=60)
             header_bbox = draw.textbbox((0, 0), header_text, font=header_font)
             header_x = (image_pil.width - (header_bbox[2] - header_bbox[0])) // 2
-            header_y = 10
-            draw.text((header_x, header_y), header_text, font=header_font, fill=(255, 0, 0))
+            draw.text((header_x, 10), header_text, font=header_font, fill=(255, 0, 0))
         except Exception as e:
             print(f"[WARN] Header gagal ditambahkan: {e}")
 
-        # Deteksi objek (harus convert ke numpy RGB dulu untuk masuk ke YOLO)
+        # 🤖 Object detection
         detection_model = load_model()
         if detection_model:
             img_rgb = np.array(image_pil.convert("RGB"))
@@ -90,14 +99,13 @@ def process_image():
                     draw.text((text_x, text_y), nama, font=font_main, fill=font_color)
                     break
         else:
-            print("[WARN] Model tidak tersedia, fallback ke tengah.")
             font_main = get_font(size=100)
             text_bbox = font_main.getbbox(nama)
             text_x = (image_pil.width - (text_bbox[2] - text_bbox[0])) // 2
             text_y = (image_pil.height - (text_bbox[3] - text_bbox[1])) // 2
             draw.text((text_x, text_y), nama, font=font_main, fill=font_color)
 
-        # Buat path berdasarkan waktu
+        # 💾 Save to new path
         now = datetime.now()
         month = now.strftime('%B').upper()
         day = now.strftime('%d')
@@ -108,20 +116,25 @@ def process_image():
         existing_files = [f for f in os.listdir(target_dir) if re.match(rf"{prefix}\d+{ext}", f)]
         next_number = max([int(re.findall(rf"{prefix}(\d+){ext}", f)[0]) for f in existing_files], default=0) + 1
         output_filename = f"{prefix}{next_number}{ext}"
-        output_path = get_save_path(base_dir=base_dir, filename=output_filename)
+        output_path = os.path.join(target_dir, output_filename)
 
-        # Simpan dengan ICC Profile & DPI yang sama
         image_pil.save(output_path, format='JPEG', quality=95, dpi=dpi, icc_profile=icc_profile)
-        print(f"[✅] Gambar disimpan ke: {output_path} dengan metadata asli")
+        print(f"[✅] Gambar disimpan ke: {output_path}")
 
-        # Kirim ke client
-        img_bytes = io.BytesIO()
-        image_pil.save(img_bytes, format='JPEG', quality=95, dpi=dpi, icc_profile=icc_profile)
-        img_bytes.seek(0)
-        return send_file(img_bytes, mimetype='image/jpeg', as_attachment=True, download_name=output_filename)
+        return jsonify({
+            "message": "Gambar berhasil diproses",
+            "output_path": output_path,
+            "output_filename": output_filename
+        })
 
     except Exception as e:
         return jsonify({'error': f'Terjadi kesalahan: {str(e)}'}), 500
+
+
+def process_image_file(image_path, nama, header_text="HEADER", font_color_name="black"):
+    print(f"Proses image: {image_path}, nama: {nama}")
+    # untuk sekarang return dummy dulu
+    return "D:/dummy/path.jpg", "Sample_dummy.jpg"
 
 
 @image_bp.route('/health', methods=['GET'])
