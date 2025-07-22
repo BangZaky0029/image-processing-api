@@ -2,7 +2,7 @@ import pymysql
 
 def get_connection():
     return pymysql.connect(
-        host="127.0.0.1",
+        host="100.124.58.32",
         user="root",
         password="",
         database="db_ai",

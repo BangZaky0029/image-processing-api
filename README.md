@@ -48,7 +48,7 @@ API berbasis Flask untuk memproses gambar dengan deteksi objek menggunakan YOLOv
 python src/main.py
 ```
 
-Server akan berjalan di `http://localhost:5001`
+Server akan berjalan di `http://100.124.58.32:5001`
 
 ### Production Mode
 
@@ -105,14 +105,14 @@ Untuk dokumentasi lengkap, lihat [API_Documentation.md](API_Documentation.md)
 ### cURL
 ```bash
 # Health check
-curl http://localhost:5001/api/health
+curl http://100.124.58.32:5001/api/health
 
 # Process image
 curl -X POST \
   -F "image=@image.jpg" \
   -F "header_text=Custom Header" \
   -F "font_color=blue" \
-  http://localhost:5001/api/process_image \
+  http://100.124.58.32:5001/api/process_image \
   --output result.jpg
 ```
 
@@ -124,7 +124,7 @@ import requests
 with open('input.jpg', 'rb') as f:
     files = {'image': f}
     data = {'header_text': 'Test', 'font_color': 'red'}
-    response = requests.post('http://localhost:5001/api/process_image', 
+    response = requests.post('http://100.124.58.32:5001/api/process_image', 
                            files=files, data=data)
     
     with open('output.jpg', 'wb') as out:

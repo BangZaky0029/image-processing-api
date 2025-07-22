@@ -11,7 +11,7 @@ import os
 def test_health_endpoint():
     """Test health endpoint"""
     try:
-        response = requests.get('http://localhost:5001/api/health', timeout=5)
+        response = requests.get('http://100.124.58.32:5001/api/health', timeout=5)
         print(f"Health Check Status: {response.status_code}")
         if response.status_code == 200:
             print(f"Response: {response.json()}")
@@ -42,7 +42,7 @@ def test_process_image_endpoint():
             'font_color': 'blue'
         }
         
-        response = requests.post('http://localhost:5001/api/process_image', 
+        response = requests.post('http://100.124.58.32:5001/api/process_image', 
                                files=files, data=data, timeout=30)
         
         print(f"Process Image Status: {response.status_code}")

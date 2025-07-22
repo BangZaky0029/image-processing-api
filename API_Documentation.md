@@ -5,7 +5,7 @@ API ini dibuat berdasarkan kode Python yang menggunakan YOLOv5 untuk deteksi obj
 
 ## Base URL
 ```
-http://localhost:5001
+http://100.124.58.32:5001
 ```
 
 ## Endpoints
@@ -63,7 +63,7 @@ http://localhost:5001
 
 #### Health Check
 ```bash
-curl -X GET http://localhost:5001/api/health
+curl -X GET http://100.124.58.32:5001/api/health
 ```
 
 #### Process Image
@@ -72,7 +72,7 @@ curl -X POST \
   -F "image=@/path/to/your/image.jpg" \
   -F "header_text=Custom Header Text" \
   -F "font_color=blue" \
-  http://localhost:5001/api/process_image \
+  http://100.124.58.32:5001/api/process_image \
   --output processed_image.jpg
 ```
 
@@ -82,7 +82,7 @@ curl -X POST \
 import requests
 
 # Health check
-response = requests.get('http://localhost:5001/api/health')
+response = requests.get('http://100.124.58.32:5001/api/health')
 print(response.json())
 
 # Process image
@@ -92,7 +92,7 @@ with open('input_image.jpg', 'rb') as f:
         'header_text': 'Custom Header',
         'font_color': 'red'
     }
-    response = requests.post('http://localhost:5001/api/process_image', 
+    response = requests.post('http://100.124.58.32:5001/api/process_image', 
                            files=files, data=data)
     
     if response.status_code == 200:
@@ -107,7 +107,7 @@ with open('input_image.jpg', 'rb') as f:
 
 ```javascript
 // Health check
-fetch('http://localhost:5001/api/health')
+fetch('http://100.124.58.32:5001/api/health')
   .then(response => response.json())
   .then(data => console.log(data));
 
@@ -117,7 +117,7 @@ formData.append('image', fileInput.files[0]);
 formData.append('header_text', 'Custom Header');
 formData.append('font_color', 'blue');
 
-fetch('http://localhost:5001/api/process_image', {
+fetch('http://100.124.58.32:5001/api/process_image', {
   method: 'POST',
   body: formData
 })
